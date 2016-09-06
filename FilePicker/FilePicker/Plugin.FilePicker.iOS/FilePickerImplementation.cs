@@ -37,6 +37,7 @@ namespace Plugin.FilePicker
 		public void DidPickDocumentPicker(UIDocumentMenuViewController documentMenu, UIDocumentPickerViewController documentPicker)
 		{
 			documentPicker.DidPickDocument += DocumentPicker_DidPickDocument;
+			documentPicker.WasCancelled += DocumentPicker_WasCancelled;
 
 			UIApplication.SharedApplication.KeyWindow.RootViewController.PresentViewController(documentPicker, true, null);
 
@@ -139,9 +140,16 @@ namespace Plugin.FilePicker
 
 		}
 
-		public void WasCancelled(UIDocumentMenuViewController documentMenu)
+		/// <summary>
+		/// Handles when the file picker was cancelled. Either in the
+		/// popup menu or later on.
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		public void DocumentPicker_WasCancelled(object sender, EventArgs e)
 		{
-
+			var tcs = Interlocked.Exchange(ref this.completionSource, null);
+			tcs.SetResult(null);
 		}
 
 		private int GetRequestId()
@@ -214,6 +222,12 @@ namespace Plugin.FilePicker
 				await SaveFile(fileToOpen);
 				OpenFile(fileToOpen);
 			}
+		}
+
+		public void WasCancelled(UIDocumentMenuViewController documentMenu)
+		{
+			var tcs = Interlocked.Exchange(ref this.completionSource, null);
+			tcs.SetResult(null);
 		}
 	}
 }
