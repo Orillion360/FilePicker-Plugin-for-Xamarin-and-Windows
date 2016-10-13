@@ -56,6 +56,7 @@ namespace Plugin.FilePicker
 					var tcs = Interlocked.Exchange(ref this.completionSource, null);
 
 					FilePickerActivity.FilePicked -= handler;
+					FilePickerActivity.FilePickCancelled -= cancelledHandler;
 
 					tcs.SetResult(new FileData()
 					{
@@ -68,6 +69,7 @@ namespace Plugin.FilePicker
 				{
 					var tcs = Interlocked.Exchange(ref this.completionSource, null);
 
+					FilePickerActivity.FilePicked -= handler;
 					FilePickerActivity.FilePickCancelled -= cancelledHandler;
 
 					tcs.SetResult(null);
