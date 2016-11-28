@@ -16,7 +16,6 @@ namespace Plugin.FilePicker
 	/// </summary>
 	public class FilePickerImplementation : NSObject, IUIDocumentMenuDelegate, IFilePicker
 	{
-
 		private int requestId;
 		private TaskCompletionSource<FileData> completionSource;
 
@@ -40,7 +39,6 @@ namespace Plugin.FilePicker
 			documentPicker.WasCancelled += DocumentPicker_WasCancelled;
 
 			UIApplication.SharedApplication.KeyWindow.RootViewController.PresentViewController(documentPicker, true, null);
-
 		}
 
 		void DocumentPicker_DidPickDocument(object sender, UIDocumentPickedEventArgs e)
@@ -48,7 +46,6 @@ namespace Plugin.FilePicker
 			var securityEnabled = e.Url.StartAccessingSecurityScopedResource();
 
 			var doc = new UIDocument(e.Url);
-			;
 
 			var data = NSData.FromUrl(e.Url);
 
@@ -85,9 +82,8 @@ namespace Plugin.FilePicker
 			return media;
 		}
 
-		private Task<FileData> TakeMediaAsync()
+		private Task<FileData> TakeMediaAsync(bool picture = false)
 		{
-
 			int id = GetRequestId();
 
 			var ntcs = new TaskCompletionSource<FileData>(id);
@@ -98,9 +94,21 @@ namespace Plugin.FilePicker
 				UTType.Content
 			};
 
-			UIDocumentMenuViewController importMenu =
-				new UIDocumentMenuViewController(allowedUTIs, UIDocumentPickerMode.Import);
-			importMenu.Delegate = this;
+			UIViewController importMenu;
+
+			if (picture)
+			{
+				UIImagePickerController importMenuImage = new UIImagePickerController();
+				importMenuImage.FinishedPickingMedia += ImportMenuImage_FinishedPickingMedia;
+				importMenuImage.Canceled += ImportMenuImage_Canceled;
+				importMenu = importMenuImage;
+			}
+			else
+			{
+				UIDocumentMenuViewController importMenuData = new UIDocumentMenuViewController(allowedUTIs, UIDocumentPickerMode.Import);
+				importMenuData.Delegate = this;
+				importMenu = importMenuData;
+			}
 
 			importMenu.ModalPresentationStyle = UIModalPresentationStyle.Popover;
 
@@ -130,6 +138,40 @@ namespace Plugin.FilePicker
 
 			return completionSource.Task;
 
+		}
+
+		private void ImportMenuImage_Canceled(object sender, EventArgs e)
+		{
+			((UIImagePickerController)sender).DismissModalViewController(true);
+
+			var tcs = Interlocked.Exchange(ref this.completionSource, null);
+			tcs.SetResult(null);
+		}
+
+		private void ImportMenuImage_FinishedPickingMedia(object sender, UIImagePickerMediaPickedEventArgs e)
+		{
+			NSUrl referenceUrl = e.Info[UIImagePickerController.ReferenceUrl] as NSUrl;
+			bool isImage = e.Info[UIImagePickerController.MediaType].ToString() == "public.image";
+
+			byte[] filedata;
+			string filename = referenceUrl.PathComponents.Last();
+
+			if (isImage)
+			{
+				UIImage image = e.Info[UIImagePickerController.OriginalImage] as UIImage;
+				NSData imageData = image.AsPNG();
+				filedata = imageData.ToArray();
+			}
+			else
+			{
+				NSUrl dataUrl = e.Info[UIImagePickerController.MediaURL] as NSUrl;
+				NSData videoData = NSData.FromUrl(dataUrl);
+				filedata = videoData.ToArray();
+			}
+
+			OnFilePicked(new FilePickerEventArgs(filedata, filename));
+
+			((UIImagePickerController)sender).DismissModalViewController(true);
 		}
 
 		/// <summary>
@@ -220,6 +262,11 @@ namespace Plugin.FilePicker
 		{
 			var tcs = Interlocked.Exchange(ref this.completionSource, null);
 			tcs.SetResult(null);
+		}
+
+		public Task<FileData> PickPicture()
+		{
+			return TakeMediaAsync(true);
 		}
 	}
 }

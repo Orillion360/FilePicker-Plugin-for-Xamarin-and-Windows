@@ -148,5 +148,10 @@ namespace Plugin.FilePicker
 
 			OpenFile(fileToOpen);
 		}
+
+		public Task<FileData> PickPicture()
+		{
+			return PickFile();
+		}
 	}
 }

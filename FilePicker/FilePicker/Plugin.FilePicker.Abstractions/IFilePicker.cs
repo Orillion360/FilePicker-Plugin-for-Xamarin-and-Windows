@@ -9,6 +9,7 @@ namespace Plugin.FilePicker.Abstractions
 	public interface IFilePicker
 	{
 		Task<FileData> PickFile();
+		Task<FileData> PickPicture();
 
 		Task<bool> SaveFile(FileData fileToSave);
 
