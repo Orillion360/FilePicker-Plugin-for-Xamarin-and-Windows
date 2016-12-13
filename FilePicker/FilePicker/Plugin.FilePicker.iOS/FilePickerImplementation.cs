@@ -169,9 +169,9 @@ namespace Plugin.FilePicker
 				filedata = videoData.ToArray();
 			}
 
-			OnFilePicked(new FilePickerEventArgs(filedata, filename));
-
 			((UIImagePickerController)sender).DismissModalViewController(true);
+
+			OnFilePicked(new FilePickerEventArgs(filedata, filename));
 		}
 
 		/// <summary>
