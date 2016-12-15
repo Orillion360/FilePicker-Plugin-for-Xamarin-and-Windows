@@ -153,5 +153,10 @@ namespace Plugin.FilePicker
 		{
 			return PickFile();
 		}
+
+		public Task<FileData> PickVideo()
+		{
+			return PickFile();
+		}
 	}
 }

@@ -10,6 +10,7 @@ namespace Plugin.FilePicker.Abstractions
 	{
 		Task<FileData> PickFile();
 		Task<FileData> PickPicture();
+		Task<FileData> PickVideo();
 
 		Task<bool> SaveFile(FileData fileToSave);
 

@@ -23,7 +23,13 @@ namespace Plugin.FilePicker
 		{
 			get;
 			set;
+		}
 
+		private enum MediaType
+		{
+			File,
+			Picture,
+			Video,
 		}
 
 		private void OnFilePicked(FilePickerEventArgs e)
@@ -82,7 +88,7 @@ namespace Plugin.FilePicker
 			return media;
 		}
 
-		private Task<FileData> TakeMediaAsync(bool picture = false)
+		private Task<FileData> TakeMediaAsync(MediaType mediaType = MediaType.File)
 		{
 			int id = GetRequestId();
 
@@ -96,11 +102,17 @@ namespace Plugin.FilePicker
 
 			UIViewController importMenu;
 
-			if (picture)
+			if (mediaType == MediaType.Picture || mediaType == MediaType.Video)
 			{
 				UIImagePickerController importMenuImage = new UIImagePickerController();
 				importMenuImage.FinishedPickingMedia += ImportMenuImage_FinishedPickingMedia;
 				importMenuImage.Canceled += ImportMenuImage_Canceled;
+				importMenuImage.MediaTypes = new string[]
+				{
+					UTType.Video,
+					UTType.Image,
+					UTType.Movie,
+				};
 				importMenu = importMenuImage;
 			}
 			else
@@ -266,7 +278,12 @@ namespace Plugin.FilePicker
 
 		public Task<FileData> PickPicture()
 		{
-			return TakeMediaAsync(true);
+			return TakeMediaAsync(MediaType.Picture);
+		}
+
+		public Task<FileData> PickVideo()
+		{
+			return TakeMediaAsync(MediaType.Video);
 		}
 	}
 }
